@@ -423,12 +423,33 @@ body::before {
     font-family: 'Orbitron', sans-serif;
     font-size: 1.8rem;
     font-weight: 900;
-    color: var(--cream);
-    text-shadow: 
-        3px 3px 0px var(--brown-dark),
-        5px 5px 0px var(--brown-medium);
+    /* High contrast gradient for visibility */
+    background: linear-gradient(135deg, var(--red-accent), var(--orange-bright));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    /* Strong shadow for extra visibility */
+    filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.5));
     letter-spacing: 0.2rem;
     margin: 0;
+    /* Add outline for even better visibility */
+    position: relative;
+}
+
+.game-brand::before {
+    content: 'LOSH YAHTZEE';
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: -1;
+    -webkit-text-fill-color: var(--brown-dark);
+    background: none;
+    filter: none;
+    text-shadow: 
+        -1px -1px 0 var(--brown-dark),
+        1px -1px 0 var(--brown-dark),
+        -1px 1px 0 var(--brown-dark),
+        1px 1px 0 var(--brown-dark);
 }
 
 .room-info {
@@ -1079,6 +1100,10 @@ body::before {
         letter-spacing: 0.1rem;
     }
 
+    .game-brand::before {
+        content: 'LOSH YAHTZEE';
+    }
+
     .room-info {
         font-size: 0.75rem;
     }
@@ -1468,4 +1493,3 @@ body::before {
         max-width: 90vw;
     }
 }
-
