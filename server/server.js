@@ -51,13 +51,14 @@ function sendToPlayer(ws, message) {
 // ROOM MANAGEMENT
 // ============================================================
 
-function createRoom(ws, playerName) {
+function createRoom(ws, playerName, maxPlayers = 3) {
     const roomCode = generateRoomCode();
     const playerId = generatePlayerId();
     
     const room = {
         code: roomCode,
         host: playerId,
+        maxPlayers: maxPlayers,
         players: [{
             id: playerId,
             name: playerName,
@@ -75,14 +76,15 @@ function createRoom(ws, playerName) {
         type: 'room_created',
         roomCode: roomCode,
         playerId: playerId,
+        maxPlayers: maxPlayers,
         players: room.players.map(p => ({ id: p.id, name: p.name }))
     });
     
-    console.log(`Room ${roomCode} created by ${playerName}`);
+    console.log(`Room ${roomCode} created by ${playerName} (max ${maxPlayers} players)`);
 }
 
 function joinRoom(ws, playerName, roomCode) {
-    const room = rooms.get(roomCode);
+    const room = rooms.get(roomCode.toUpperCase());
     
     if (!room) {
         sendToPlayer(ws, {
@@ -92,7 +94,7 @@ function joinRoom(ws, playerName, roomCode) {
         return;
     }
     
-    if (room.players.length >= 3) {
+    if (room.players.length >= room.maxPlayers) {
         sendToPlayer(ws, {
             type: 'error',
             message: 'Room is full'
@@ -117,13 +119,14 @@ function joinRoom(ws, playerName, roomCode) {
     };
     
     room.players.push(player);
-    players.set(ws, { roomCode, playerId });
+    players.set(ws, { roomCode: roomCode.toUpperCase(), playerId });
     
     // Notify the joining player
     sendToPlayer(ws, {
         type: 'room_joined',
-        roomCode: roomCode,
+        roomCode: roomCode.toUpperCase(),
         playerId: playerId,
+        maxPlayers: room.maxPlayers,
         players: room.players.map(p => ({ id: p.id, name: p.name }))
     });
     
@@ -132,10 +135,11 @@ function joinRoom(ws, playerName, roomCode) {
         type: 'player_joined',
         playerId: playerId,
         playerName: playerName,
+        maxPlayers: room.maxPlayers,
         players: room.players.map(p => ({ id: p.id, name: p.name }))
     }, ws);
     
-    console.log(`${playerName} joined room ${roomCode}`);
+    console.log(`${playerName} joined room ${roomCode} (${room.players.length}/${room.maxPlayers})`);
 }
 
 function leaveRoom(ws) {
@@ -192,10 +196,10 @@ function startGame(ws, roomCode) {
         return;
     }
     
-    if (room.players.length !== 3) {
+    if (room.players.length < room.maxPlayers) {
         sendToPlayer(ws, {
             type: 'error',
-            message: 'Need exactly 3 players to start'
+            message: `Need ${room.maxPlayers} players to start (currently ${room.players.length})`
         });
         return;
     }
@@ -317,7 +321,7 @@ wss.on('connection', (ws) => {
             
             switch (data.type) {
                 case 'create_room':
-                    createRoom(ws, data.playerName);
+                    createRoom(ws, data.playerName, data.maxPlayers || 3);
                     break;
                     
                 case 'join_room':
